@@ -213,13 +213,21 @@
     nextButton.disabled = true;
     try {
       const period = periods[ageFilter.value];
-      const searchParams = new URLSearchParams({ hasImages: 'true', isPublicDomain: 'true', q: typeFilter.value });
+      const searchParams = new URLSearchParams({ hasImages: 'true', isPublicDomain: 'true', q: typeFilter.value, limit: '40', offset: '0' });
       if (period) { searchParams.set('dateBegin', period[0]); searchParams.set('dateEnd', period[1]); }
-      const listResponse = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?${searchParams}`);
+      const searchURL = 'https://collectionapi.metmuseum.org/public/collection/v1.1/search';
+      let listResponse = await fetch(`${searchURL}?${searchParams}`);
       if (!listResponse.ok) throw new Error('The collection is unavailable right now.');
-      const { objectIDs } = await listResponse.json();
+      let searchResults = await listResponse.json();
+      if (searchResults.total > 40) {
+        searchParams.set('offset', Math.floor(Math.random() * (searchResults.total - 39)));
+        listResponse = await fetch(`${searchURL}?${searchParams}`);
+        if (!listResponse.ok) throw new Error('The collection is unavailable right now.');
+        searchResults = await listResponse.json();
+      }
+      const { objectIDs } = searchResults;
       if (!objectIDs || objectIDs.length === 0) throw new Error('No artworks match those filters. Try a broader selection.');
-      const candidates = [...objectIDs].sort(() => Math.random() - 0.5).slice(0, 40);
+      const candidates = [...objectIDs].sort(() => Math.random() - 0.5);
       let work;
       for (const objectID of candidates) {
         const workResponse = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectID}`);
