@@ -219,8 +219,9 @@
       let listResponse = await fetch(`${searchURL}?${searchParams}`);
       if (!listResponse.ok) throw new Error('The collection is unavailable right now.');
       let searchResults = await listResponse.json();
-      if (searchResults.total > 40) {
-        searchParams.set('offset', Math.floor(Math.random() * (searchResults.total - 39)));
+      const maxOffset = Math.min(searchResults.total, 10000) - 40;
+      if (maxOffset > 0) {
+        searchParams.set('offset', Math.floor(Math.random() * (maxOffset + 1)));
         listResponse = await fetch(`${searchURL}?${searchParams}`);
         if (!listResponse.ok) throw new Error('The collection is unavailable right now.');
         searchResults = await listResponse.json();
